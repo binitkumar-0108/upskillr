@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UpSkillr Admin - Course & Video Manager</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    html, body {
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 24px;
+      background-color: #f0f2f5;
+      color: #1c1e21;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    h1 {
+      margin-top: 0;
+      margin-bottom: 24px;
+      color: #0f172a;
+      font-size: 26px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      word-break: break-word;
+    }
+    h2 {
+      margin-top: 0;
+      margin-bottom: 16px;
+      color: #1e293b;
+      font-size: 20px;
+      word-break: break-word;
+    }
+    h3 {
+      margin-top: 20px;
+      margin-bottom: 12px;
+      font-size: 16px;
+      color: #334155;
+    }
+
+    /* Notification Banners */
+    #notificationContainer {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 400px;
+      width: calc(100% - 40px);
+      pointer-events: none;
+    }
+    .toast {
+      padding: 12px 18px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      animation: fadeIn 0.25s ease-out;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      pointer-events: auto;
+      word-break: break-word;
+    }
+    .toast-success {
+      background-color: #10b981;
+      color: #ffffff;
+    }
+    .toast-error {
+      background-color: #ef4444;
+      color: #ffffff;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Card Panels */
+    .card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 24px;
+      margin-bottom: 28px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Section B Disabled State */
+    .section-disabled {
+      opacity: 0.5;
+      pointer-events: none;
+      user-select: none;
+      filter: grayscale(0.4);
+    }
+
+    /* Form Styles */
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #475569;
+    }
+    input[type="text"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+      color: #0f172a;
+      background: #ffffff;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    input[type="text"]:focus,
+    textarea:focus,
+    select:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+    textarea {
+      resize: vertical;
+      min-height: 64px;
+    }
+    .two-col-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 9px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.15s, transform 0.05s;
+      text-decoration: none;
+    }
+    .btn-primary {
+      background-color: #2563eb;
+      color: #ffffff;
+    }
+    .btn-primary:hover {
+      background-color: #1d4ed8;
+    }
+    .btn-success {
+      background-color: #10b981;
+      color: #ffffff;
+    }
+    .btn-success:hover {
+      background-color: #059669;
+    }
+    .btn-danger {
+      background-color: #ef4444;
+      color: #ffffff;
+    }
+    .btn-danger:hover {
+      background-color: #dc2626;
+    }
+    .btn-secondary {
+      background-color: #e2e8f0;
+      color: #334155;
+    }
+    .btn-secondary:hover {
+      background-color: #cbd5e1;
+    }
+    .btn-sm {
+      padding: 5px 12px;
+      font-size: 12px;
+    }
+
+    /* Course List Grid */
+    .courses-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+    .course-item {
+      background: #f8fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .course-item:hover {
+      border-color: #93c5fd;
+      background: #eff6ff;
+      transform: translateY(-1px);
+    }
+    .course-item.selected {
+      border-color: #2563eb;
+      background: #eff6ff;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    }
+    .course-main {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .course-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #0f172a;
+      word-break: break-word;
+    }
+    .course-badge {
+      display: inline-block;
+      align-self: flex-start;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: #e2e8f0;
+      color: #475569;
+    }
+    .course-item.selected .course-badge {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+    .course-actions {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      margin-top: auto;
+    }
+
+    /* Video List */
+    .video-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .video-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      width: 100%;
+    }
+    .video-thumb {
+      width: 110px;
+      height: 62px;
+      object-fit: cover;
+      border-radius: 4px;
+      background: #cbd5e1;
+      flex-shrink: 0;
+    }
+    .video-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .video-title-display {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1e293b;
+      word-break: break-word;
+    }
+    .video-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .inline-edit-input {
+      width: 100%;
+      padding: 6px 10px;
+      font-size: 14px;
+      border: 1px solid #2563eb;
+      border-radius: 4px;
+    }
+
+    .empty-state {
+      padding: 20px;
+      text-align: center;
+      color: #64748b;
+      font-size: 14px;
+      background: #f8fafc;
+      border-radius: 6px;
+      border: 1px dashed #cbd5e1;
+    }
+
+    /* Responsive Media Queries */
+    @media (max-width: 768px) {
+      body {
+        padding: 16px;
+      }
+      .card {
+        padding: 18px 16px;
+        margin-bottom: 20px;
+      }
+      h1 {
+        font-size: 22px;
+        margin-bottom: 18px;
+      }
+      h2 {
+        font-size: 18px;
+      }
+      h3 {
+        font-size: 15px;
+      }
+
+      /* Stack two-column layouts into single column below 768px */
+      .two-col-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      /* Full width course cards */
+      .courses-grid {
+        grid-template-columns: 1fr;
+      }
+      .course-item {
+        width: 100%;
+      }
+
+      /* Full width video rows and proportional thumbnails */
+      .video-item {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      .video-thumb {
+        width: 80px;
+        height: auto;
+        aspect-ratio: 16 / 9;
+      }
+      .video-info {
+        flex: 1;
+        min-width: 140px;
+      }
+      .video-actions {
+        width: 100%;
+        justify-content: flex-end;
+        gap: 10px;
+      }
+
+      /* Touch targets minimum ~44px */
+      .btn {
+        min-height: 44px;
+        padding: 10px 18px;
+        font-size: 15px;
+      }
+      .btn-sm {
+        min-height: 44px;
+        padding: 10px 16px;
+        font-size: 14px;
+      }
+      input[type="text"],
+      textarea,
+      select {
+        min-height: 44px;
+        font-size: 16px;
+      }
+
+      #notificationContainer {
+        top: 12px;
+        right: 12px;
+        left: 12px;
+        max-width: none;
+        width: auto;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 12px;
+      }
+      .card {
+        padding: 14px 12px;
+        margin-bottom: 16px;
+      }
+      h1 {
+        font-size: 20px;
+      }
+      h2 {
+        font-size: 17px;
+      }
+      .course-title {
+        font-size: 15px;
+      }
+      .course-actions {
+        width: 100%;
+      }
+      .course-actions .btn {
+        width: 100%;
+      }
+      .video-actions {
+        display: flex;
+      }
+      .video-actions .btn {
+        flex: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Notifications -->
+  <div id="notificationContainer"></div>
+
+  <div class="container">
+    <h1>UpSkillr Admin Management</h1>
+
+    <!-- SECTION A: Course Management -->
+    <section id="sectionCourses" class="card">
+      <h2>Section A: Course Management</h2>
+
+      <form id="courseForm">
+        <div class="two-col-grid">
+          <div class="form-group">
+            <label for="courseTitle">Course Title *</label>
+            <input type="text" id="courseTitle" required placeholder="e.g. JavaScript Essentials" />
+          </div>
+
+          <div class="form-group">
+            <label for="courseCategory">Category</label>
+            <select id="courseCategory">
+              <option value="JavaScript">JavaScript</option>
+              <option value="Python">Python</option>
+              <option value="Java">Java</option>
+              <option value="Web Development">Web Development</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="courseDesc">Course Description</label>
+          <textarea id="courseDesc" placeholder="Brief description of the course content..."></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="btnCreateCourse">Create Course</button>
+      </form>
+
+      <h3>Existing Courses <span style="font-size: 13px; font-weight: normal; color: #64748b;">(Click to select active course)</span></h3>
+      <div id="courseList" class="courses-grid">
+        <div class="empty-state">Loading courses...</div>
+      </div>
+    </section>
+
+    <!-- SECTION B: Video Management (Disabled until course selected) -->
+    <section id="sectionVideos" class="card section-disabled">
+      <h2 id="sectionVideosHeading">Section B: Video Management (Select a course above)</h2>
+
+      <form id="videoForm">
+        <div class="two-col-grid">
+          <!-- Column 1: Video Title -->
+          <div class="form-group">
+            <label for="videoTitle">Video Title *</label>
+            <input type="text" id="videoTitle" required placeholder="e.g. Async / Await in Depth" />
+          </div>
+
+          <!-- Column 2: YouTube URL -->
+          <div class="form-group">
+            <label for="youtubeUrl">YouTube URL *</label>
+            <input type="text" id="youtubeUrl" required placeholder="https://www.youtube.com/watch?v=..." />
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-success" id="btnAddVideo">Add Video</button>
+      </form>
+
+      <h3>Course Videos</h3>
+      <div id="videoList" class="video-list">
+        <div class="empty-state">No course selected.</div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:5000/api';
+
+    // Application state (persisted strictly in MongoDB, no localStorage/sessionStorage)
+    let selectedCourse = null;
+    let courses = [];
+    let videos = [];
+
+    // Elements
+    const courseForm = document.getElementById('courseForm');
+    const courseTitleInput = document.getElementById('courseTitle');
+    const courseDescInput = document.getElementById('courseDesc');
+    const courseCategoryInput = document.getElementById('courseCategory');
+    const courseListEl = document.getElementById('courseList');
+
+    const sectionVideos = document.getElementById('sectionVideos');
+    const sectionVideosHeading = document.getElementById('sectionVideosHeading');
+    const videoForm = document.getElementById('videoForm');
+    const videoTitleInput = document.getElementById('videoTitle');
+    const youtubeUrlInput = document.getElementById('youtubeUrl');
+    const videoListEl = document.getElementById('videoList');
+    const notificationContainer = document.getElementById('notificationContainer');
+
+    // -------------------------------------------------------------
+    // Toast Notifications
+    // -------------------------------------------------------------
+    function showNotification(message, type = 'success', duration = 2000) {
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.textContent = message;
+      notificationContainer.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.transition = 'opacity 0.3s ease';
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+      }, duration);
+    }
+
+    function showError(message) {
+      showNotification(message, 'error', 4500);
+    }
+
+    function showSuccess(message) {
+      showNotification(message, 'success', 2000);
+    }
+
+    // -------------------------------------------------------------
+    // SECTION A: Course Management
+    // -------------------------------------------------------------
+    async function loadCourses() {
+      try {
+        const res = await fetch(`${API_BASE}/courses`);
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.message || errData.error || `Error ${res.status}: ${res.statusText}`);
+        }
+
+        courses = await res.json();
+        renderCourses();
+      } catch (err) {
+        showError(`Could not load courses: ${err.message}`);
+        courseListEl.innerHTML = `<div class="empty-state" style="color:#ef4444;">Failed to load courses from API (${escapeHtml(err.message)})</div>`;
+      }
+    }
+
+    function renderCourses() {
+      if (!Array.isArray(courses) || courses.length === 0) {
+        courseListEl.innerHTML = '<div class="empty-state">No courses created yet. Create one above!</div>';
+        return;
+      }
+
+      courseListEl.innerHTML = '';
+      courses.forEach(course => {
+        const isSelected = selectedCourse && selectedCourse._id === course._id;
+        const card = document.createElement('div');
+        card.className = `course-item ${isSelected ? 'selected' : ''}`;
+        card.innerHTML = `
+          <div class="course-main">
+            <div class="course-title">${escapeHtml(course.title)}</div>
+            ${course.category ? `<span class="course-badge">${escapeHtml(course.category)}</span>` : ''}
+          </div>
+          <div class="course-actions">
+            <button type="button" class="btn btn-danger btn-sm" onclick="handleDeleteCourse(event, '${course._id}')">Delete</button>
+          </div>
+        `;
+        card.addEventListener('click', () => selectCourse(course));
+        courseListEl.appendChild(card);
+      });
+    }
+
+    window.handleDeleteCourse = async function(event, courseId) {
+      if (event) {
+        event.stopPropagation();
+      }
+
+      const confirmed = confirm('Delete this course and ALL its videos? This cannot be undone.');
+      if (!confirmed) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/courses/${courseId}`, {
+          method: 'DELETE'
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.message || data.error || 'Failed to delete course');
+        }
+
+        showSuccess(data.message || 'Course deleted successfully');
+
+        // IMPORTANT: if the deleted course was the currently selected/active course
+        // for Section B, clear Section B entirely and show it as inactive/grayed out again
+        if (selectedCourse && selectedCourse._id === courseId) {
+          selectedCourse = null;
+          videos = [];
+          sectionVideos.classList.add('section-disabled');
+          sectionVideosHeading.textContent = 'Section B: Video Management (Select a course above)';
+          videoListEl.innerHTML = '<div class="empty-state">No course selected.</div>';
+          videoForm.reset();
+        }
+
+        await loadCourses();
+      } catch (err) {
+        showError(err.message);
+      }
+    };
+
+    courseForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const title = courseTitleInput.value.trim();
+      const description = courseDescInput.value.trim();
+      const category = courseCategoryInput.value;
+
+      if (!title) {
+        showError('Title is required');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/courses`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, description, category })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.message || data.error || 'Failed to create course');
+        }
+
+        showSuccess(`Course "${data.title}" created successfully!`);
+        courseForm.reset();
+        await loadCourses();
+
+        // Auto-select newly created course
+        selectCourse(data);
+      } catch (err) {
+        showError(err.message);
+      }
+    });
+
+    function selectCourse(course) {
+      selectedCourse = course;
+      renderCourses();
+
+      // Enable Section B
+      sectionVideos.classList.remove('section-disabled');
+      sectionVideosHeading.textContent = `Managing videos for: ${course.title}`;
+
+      loadVideos(course._id);
+    }
+
+    // -------------------------------------------------------------
+    // SECTION B: Video Management
+    // -------------------------------------------------------------
+    async function loadVideos(courseId) {
+      videoListEl.innerHTML = '<div class="empty-state">Loading videos...</div>';
+
+      try {
+        const res = await fetch(`${API_BASE}/courses/${courseId}/videos`);
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.message || errData.error || `Error ${res.status}: ${res.statusText}`);
+        }
+
+        videos = await res.json();
+        renderVideos();
+      } catch (err) {
+        showError(`Could not load videos: ${err.message}`);
+        videoListEl.innerHTML = `<div class="empty-state" style="color:#ef4444;">Failed to load videos (${escapeHtml(err.message)})</div>`;
+      }
+    }
+
+    function renderVideos() {
+      if (!Array.isArray(videos) || videos.length === 0) {
+        videoListEl.innerHTML = '<div class="empty-state">No videos added yet for this course.</div>';
+        return;
+      }
+
+      videoListEl.innerHTML = '';
+      videos.forEach(video => {
+        const item = document.createElement('div');
+        item.className = 'video-item';
+        item.id = `video-row-${video._id}`;
+
+        item.innerHTML = `
+          <img class="video-thumb" src="${escapeHtml(video.thumbnail || '')}" alt="thumb" />
+          <div class="video-info" id="video-info-${video._id}">
+            <div class="video-title-display" id="video-title-${video._id}">${escapeHtml(video.title)}</div>
+          </div>
+          <div class="video-actions" id="video-actions-${video._id}">
+            <button class="btn btn-secondary btn-sm" onclick="startEditVideo('${video._id}')">Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteVideo('${video._id}')">Delete</button>
+          </div>
+        `;
+        videoListEl.appendChild(item);
+      });
+    }
+
+    videoForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (!selectedCourse) {
+        showError('Please select a course first');
+        return;
+      }
+
+      const title = videoTitleInput.value.trim();
+      const youtubeUrl = youtubeUrlInput.value.trim();
+
+      if (!title || !youtubeUrl) {
+        showError('Both Video Title and YouTube URL are required');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/courses/${selectedCourse._id}/videos`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, youtubeUrl })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          // Display the exact backend validation error (e.g. "Invalid YouTube URL")
+          throw new Error(data.message || data.error || 'Failed to add video');
+        }
+
+        showSuccess(`Video "${data.title}" added successfully!`);
+        videoForm.reset();
+        await loadVideos(selectedCourse._id);
+      } catch (err) {
+        showError(err.message);
+      }
+    });
+
+    window.startEditVideo = function(videoId) {
+      const video = videos.find(v => v._id === videoId);
+      if (!video) return;
+
+      const infoContainer = document.getElementById(`video-info-${videoId}`);
+      const actionsContainer = document.getElementById(`video-actions-${videoId}`);
+
+      // Inline editable input
+      infoContainer.innerHTML = `
+        <input type="text" class="inline-edit-input" id="edit-input-${videoId}" value="${escapeHtml(video.title)}" />
+      `;
+
+      // Save & Cancel buttons
+      actionsContainer.innerHTML = `
+        <button class="btn btn-success btn-sm" onclick="saveEditVideo('${videoId}')">Save</button>
+        <button class="btn btn-secondary btn-sm" onclick="renderVideos()">Cancel</button>
+      `;
+
+      const input = document.getElementById(`edit-input-${videoId}`);
+      input.focus();
+      input.select();
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') saveEditVideo(videoId);
+        if (e.key === 'Escape') renderVideos();
+      });
+    };
+
+    window.saveEditVideo = async function(videoId) {
+      const input = document.getElementById(`edit-input-${videoId}`);
+      if (!input) return;
+
+      const newTitle = input.value.trim();
+      if (!newTitle) {
+        showError('Video title cannot be empty');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/videos/${videoId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: newTitle })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.message || data.error || 'Failed to update video');
+        }
+
+        showSuccess('Video title updated successfully!');
+        await loadVideos(selectedCourse._id);
+      } catch (err) {
+        showError(err.message);
+      }
+    };
+
+    window.deleteVideo = async function(videoId) {
+      const confirmed = confirm('Are you sure you want to delete this video?');
+      if (!confirmed) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/videos/${videoId}`, {
+          method: 'DELETE'
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.message || data.error || 'Failed to delete video');
+        }
+
+        showSuccess('Video deleted successfully!');
+        await loadVideos(selectedCourse._id);
+      } catch (err) {
+        showError(err.message);
+      }
+    };
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // Initial page load
+    loadCourses();
+  </script>
+</body>
+</html>

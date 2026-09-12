@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Player Test</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    html, body {
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 24px;
+      background-color: #f4f6f8;
+      color: #333;
+    }
+    h1, h2, h3 {
+      margin-top: 0;
+      color: #111;
+      word-break: break-word;
+    }
+    .header-bar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .back-btn {
+      background: #fff;
+      border: 1px solid #ccd0d5;
+      border-radius: 6px;
+      padding: 8px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      color: #1a73e8;
+      font-weight: 600;
+      transition: background 0.2s, border-color 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .back-btn:hover {
+      background: #e8f0fe;
+      border-color: #1a73e8;
+    }
+    /* Screen 1: Course Cards Grid */
+    .courses-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .course-card {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+      display: flex;
+      flex-direction: column;
+    }
+    .course-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      border-color: #1a73e8;
+    }
+    .course-card-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #1a73e8;
+      word-break: break-word;
+    }
+    .course-card-desc {
+      font-size: 14px;
+      color: #555;
+      line-height: 1.4;
+      margin-bottom: 14px;
+      flex: 1;
+      word-break: break-word;
+    }
+    .course-card-category {
+      display: inline-block;
+      align-self: flex-start;
+      background: #e8f0fe;
+      color: #1a73e8;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 12px;
+    }
+    /* Screen 2 & 3: Video List & Player Layout */
+    .layout {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+    }
+    .video-list-container {
+      flex: 1;
+      max-width: 440px;
+      width: 100%;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    .video-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-bottom: 10px;
+      transition: background 0.2s, border-color 0.2s;
+      border: 1px solid #eee;
+      width: 100%;
+    }
+    .video-item:hover {
+      background: #eef2f7;
+    }
+    .video-item.active {
+      background: #e0edff;
+      border-color: #70a1ff;
+    }
+    .video-thumbnail {
+      width: 120px;
+      height: 68px;
+      object-fit: cover;
+      border-radius: 4px;
+      background: #ccc;
+      flex-shrink: 0;
+    }
+    .video-title {
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.3;
+      word-break: break-word;
+    }
+    #playerContainer {
+      flex: 2;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      width: 100%;
+    }
+    .video-responsive-wrapper {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%; /* 16:9 Aspect Ratio */
+    }
+    .video-responsive-wrapper iframe,
+    #playerContainer iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      border-radius: 4px;
+      display: block;
+    }
+    .status-message {
+      padding: 14px;
+      border-radius: 6px;
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeeba;
+      word-break: break-word;
+    }
+    .error-message {
+      background: #f8d7da;
+      color: #721c24;
+      border-color: #f5c6cb;
+    }
+
+    /* Responsive Media Queries */
+    @media (max-width: 768px) {
+      body {
+        padding: 16px;
+      }
+      h1 {
+        font-size: 24px;
+      }
+      h2 {
+        font-size: 20px;
+      }
+      .back-btn {
+        min-height: 44px;
+        padding: 10px 16px;
+        font-size: 14px;
+      }
+      .courses-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+      .course-card {
+        width: 100%;
+        padding: 16px;
+      }
+      /* Stack layout: video list above player */
+      .layout {
+        flex-direction: column;
+        gap: 16px;
+      }
+      .video-list-container {
+        max-width: 100%;
+        width: 100%;
+      }
+      #screen2VideoList {
+        max-width: 100% !important;
+      }
+      #playerContainer {
+        width: 100%;
+        padding: 12px;
+      }
+      .video-item {
+        padding: 12px;
+        min-height: 48px;
+      }
+      .video-thumbnail {
+        width: 80px;
+        height: auto;
+        aspect-ratio: 16 / 9;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 12px;
+      }
+      h1 {
+        font-size: 20px;
+      }
+      h2 {
+        font-size: 18px;
+      }
+      .course-card {
+        padding: 14px;
+      }
+      .course-card-title {
+        font-size: 16px;
+      }
+      .video-item {
+        gap: 10px;
+        padding: 10px;
+      }
+      .video-thumbnail {
+        width: 70px;
+        height: auto;
+        aspect-ratio: 16 / 9;
+      }
+      .video-title {
+        font-size: 13px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SCREEN 1: Course List (default view) -->
+  <div id="screen1">
+    <h1>Courses</h1>
+    <div id="courseList" class="courses-grid">
+      <p class="status-message">Loading courses...</p>
+    </div>
+  </div>
+
+  <!-- SCREEN 2: Video List -->
+  <div id="screen2" style="display: none;">
+    <div class="header-bar">
+      <button class="back-btn" onclick="goToScreen1()">&larr; Back to Courses</button>
+      <h2 id="screen2CourseTitle" style="margin: 0;">Course Videos</h2>
+    </div>
+    <div class="video-list-container" id="screen2VideoList" style="max-width: 600px;">
+      <p class="status-message">Loading videos...</p>
+    </div>
+  </div>
+
+  <!-- SCREEN 3: Player (Video list alongside embedded player) -->
+  <div id="screen3" style="display: none;">
+    <div class="header-bar">
+      <button class="back-btn" onclick="goToScreen1()">&larr; Back to Courses</button>
+      <button class="back-btn" onclick="goToScreen2()">&larr; Back to Videos</button>
+      <h2 id="screen3CourseTitle" style="margin: 0;">Course Player</h2>
+    </div>
+    <div class="layout">
+      <div class="video-list-container" id="screen3VideoList"></div>
+      <div id="playerContainer"></div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:5000/api';
+
+    // Application state
+    let currentCourse = null;
+    let currentVideos = [];
+    let currentVideo = null;
+
+    const screen1El = document.getElementById('screen1');
+    const screen2El = document.getElementById('screen2');
+    const screen3El = document.getElementById('screen3');
+
+    const courseListEl = document.getElementById('courseList');
+    const screen2CourseTitleEl = document.getElementById('screen2CourseTitle');
+    const screen2VideoListEl = document.getElementById('screen2VideoList');
+    const screen3CourseTitleEl = document.getElementById('screen3CourseTitle');
+    const screen3VideoListEl = document.getElementById('screen3VideoList');
+    const playerContainerEl = document.getElementById('playerContainer');
+
+    // -------------------------------------------------------------
+    // Screen Navigation Helpers
+    // -------------------------------------------------------------
+    function goToScreen1() {
+      // Stop any playing video
+      playerContainerEl.innerHTML = '';
+      currentCourse = null;
+      currentVideos = [];
+      currentVideo = null;
+
+      screen1El.style.display = 'block';
+      screen2El.style.display = 'none';
+      screen3El.style.display = 'none';
+      loadCourses();
+    }
+
+    function goToScreen2() {
+      // Stop any playing video
+      playerContainerEl.innerHTML = '';
+      currentVideo = null;
+
+      screen1El.style.display = 'none';
+      screen2El.style.display = 'block';
+      screen3El.style.display = 'none';
+      renderScreen2();
+    }
+
+    function goToScreen3(video) {
+      currentVideo = video;
+      screen1El.style.display = 'none';
+      screen2El.style.display = 'none';
+      screen3El.style.display = 'block';
+      renderScreen3();
+    }
+
+    // -------------------------------------------------------------
+    // SCREEN 1: Load and Render Courses
+    // -------------------------------------------------------------
+    async function loadCourses() {
+      courseListEl.innerHTML = '<p class="status-message">Loading courses...</p>';
+
+      try {
+        const res = await fetch(`${API_BASE}/courses`);
+        if (!res.ok) {
+          throw new Error(`Server returned ${res.status}: ${res.statusText}`);
+        }
+
+        const courses = await res.json();
+        if (!Array.isArray(courses) || courses.length === 0) {
+          courseListEl.innerHTML = '<div class="status-message">No published courses found.</div>';
+          return;
+        }
+
+        courseListEl.innerHTML = '';
+        courses.forEach(course => {
+          const card = document.createElement('div');
+          card.className = 'course-card';
+          card.innerHTML = `
+            <div class="course-card-title">${escapeHtml(course.title || 'Untitled Course')}</div>
+            <div class="course-card-desc">${escapeHtml(course.description || 'No description available.')}</div>
+            ${course.category ? `<span class="course-card-category">${escapeHtml(course.category)}</span>` : ''}
+          `;
+          card.addEventListener('click', () => selectCourse(course));
+          courseListEl.appendChild(card);
+        });
+      } catch (err) {
+        courseListEl.innerHTML = `<div class="status-message error-message">Could not reach server: ${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    async function selectCourse(course) {
+      currentCourse = course;
+      screen1El.style.display = 'none';
+      screen2El.style.display = 'block';
+      screen3El.style.display = 'none';
+      screen2CourseTitleEl.textContent = course.title || 'Course Videos';
+      screen2VideoListEl.innerHTML = '<p class="status-message">Loading videos...</p>';
+
+      try {
+        const res = await fetch(`${API_BASE}/courses/${course._id}/videos`);
+        if (!res.ok) {
+          throw new Error(`Server returned ${res.status}: ${res.statusText}`);
+        }
+
+        currentVideos = await res.json();
+        renderScreen2();
+      } catch (err) {
+        screen2VideoListEl.innerHTML = `<div class="status-message error-message">Failed to load videos: ${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    // -------------------------------------------------------------
+    // SCREEN 2: Render Video List
+    // -------------------------------------------------------------
+    function renderScreen2() {
+      screen2CourseTitleEl.textContent = (currentCourse && currentCourse.title) ? currentCourse.title : 'Course Videos';
+
+      if (!Array.isArray(currentVideos) || currentVideos.length === 0) {
+        screen2VideoListEl.innerHTML = '<div class="status-message">No videos found for this course.</div>';
+        return;
+      }
+
+      screen2VideoListEl.innerHTML = '';
+      currentVideos.forEach(video => {
+        const item = document.createElement('div');
+        item.className = 'video-item';
+        item.innerHTML = `
+          <img class="video-thumbnail" src="${video.thumbnail || ''}" alt="thumbnail" />
+          <span class="video-title">${escapeHtml(video.title || 'Untitled Video')}</span>
+        `;
+        item.addEventListener('click', () => goToScreen3(video));
+        screen2VideoListEl.appendChild(item);
+      });
+    }
+
+    // -------------------------------------------------------------
+    // SCREEN 3: Render Player + Video Sidebar
+    // -------------------------------------------------------------
+    function renderScreen3() {
+      screen3CourseTitleEl.textContent = (currentCourse && currentCourse.title) ? currentCourse.title : 'Course Player';
+
+      // Render Sidebar Video List
+      screen3VideoListEl.innerHTML = '';
+      currentVideos.forEach(video => {
+        const item = document.createElement('div');
+        const isActive = currentVideo && currentVideo._id === video._id;
+        item.className = `video-item ${isActive ? 'active' : ''}`;
+        item.innerHTML = `
+          <img class="video-thumbnail" src="${video.thumbnail || ''}" alt="thumbnail" />
+          <span class="video-title">${escapeHtml(video.title || 'Untitled Video')}</span>
+        `;
+        item.addEventListener('click', () => {
+          currentVideo = video;
+          renderScreen3();
+        });
+        screen3VideoListEl.appendChild(item);
+      });
+
+      // Embed YouTube Video Player
+      if (currentVideo && currentVideo.youtubeId) {
+        playerContainerEl.innerHTML = `
+          <div class="video-responsive-wrapper">
+            <iframe 
+              src="https://www.youtube.com/embed/${encodeURIComponent(currentVideo.youtubeId)}?rel=0&modestbranding=1" 
+              allow="accelerometer; autoplay; encrypted-media; gyroscope" 
+              allowfullscreen>
+            </iframe>
+          </div>
+        `;
+      } else {
+        playerContainerEl.innerHTML = '<div class="status-message">No video selected.</div>';
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // Initial load
+    loadCourses();
+  </script>
+</body>
+</html>
